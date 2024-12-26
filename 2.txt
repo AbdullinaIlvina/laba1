@@ -1,0 +1,48 @@
+import folium
+from geopy.distance import great_circle
+
+# Список координат точек (широта, долгота)
+points = [
+    (55.7558, 37.6173),  # Москва
+    (55.7617, 37.6173),  # Точка 1
+    (55.7690, 37.6200),  # Точка 2
+    (55.7730, 37.6100),  # Точка 3
+    (55.7800, 37.6000)   # Точка 4
+]
+
+# Создаем базовую карту
+map_path = folium.Map(location=[55.7558, 37.6173], zoom_start=12)
+
+# Добавляем линии между точками и метки для каждой точки
+total_distance = 0
+for i in range(len(points) - 1):
+    start = points[i]
+    end = points[i + 1]
+    
+    # Вычисляем расстояние между двумя точками
+    distance = great_circle(start, end).kilometers
+    total_distance += distance
+    
+    # Добавляем линию на карту
+    folium.PolyLine(locations=[start, end], color='blue').add_to(map_path)
+    
+    # Добавляем метку для начала и конца отрезка
+    folium.Marker(location=start, popup=f'Точка {i+1}').add_to(map_path)
+    
+# Добавляем метку для последней точки
+folium.Marker(location=points[-1], popup='Конечная точка').add_to(map_path)
+
+# Находим среднюю точку пути
+midpoint = (
+    sum(lat for lat, lon in points) / len(points),
+    sum(lon for lat, lon in points) / len(points)
+)
+
+# Добавляем метку в средней точке пути
+folium.Marker(location=midpoint, popup='Средняя точка', icon=folium.Icon(color='red')).add_to(map_path)
+
+# Сохраняем карту в HTML файл
+map_path.save('path_map.html')
+
+# Выводим общую длину пути
+print(f"Общая длина пути: {total_distance:.2f} км")

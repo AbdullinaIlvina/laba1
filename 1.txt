@@ -1,0 +1,23 @@
+import folium
+
+# Словарь с координатами стадионов
+stadiums_location = {
+    "Лужники": "37.554191,55.715551",
+    "Спартак": "37.440262,55.818015",
+    "Динамо": "37.559809,55.791540"
+}
+
+# Создаем базовую карту
+map_moscow = folium.Map(location=[55.7558, 37.6173], zoom_start=10)
+
+# Добавляем метки для каждого стадиона
+for stadium, coords in stadiums_location.items():
+    lat, lon = map(float, coords.split(','))
+    folium.Marker(
+        location=[lon, lat],
+        popup=stadium,
+        icon=folium.Icon(color='blue')
+    ).add_to(map_moscow)
+
+# Сохраняем карту в HTML файл
+map_moscow.save('moscow_stadiums_map.html')

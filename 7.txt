@@ -1,0 +1,59 @@
+import requests
+
+# Ключ API для Яндекс.Карт
+YANDEX_API_KEY = "0d997e8f-b415-4fd0-91b1-c9547916c893"
+
+def fetch_coordinates(location):
+    """Получает координаты по заданному адресу."""
+    api_url = "https://geocode-maps.yandex.ru/1.x/"
+    parameters = {
+        "geocode": location,
+        "format": "json",
+        "apikey": YANDEX_API_KEY
+    }
+    
+    response = requests.get(api_url, params=parameters).json()
+    
+    try:
+        position = response['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos']
+        return tuple(map(float, position.split()))
+    except (KeyError, IndexError):
+        print(f"Не удалось получить координаты для адреса: {location}")
+        return None
+
+def fetch_district(coords):
+    """Получает название района по координатам."""
+    reverse_api_url = "https://geocode-maps.yandex.ru/1.x/"
+    reverse_params = {
+        "ll": f"{coords[0]},{coords[1]}",
+        "spn": "0.001,0.001",  # Размер области поиска
+        "kind": "district",     # Ищем район
+        "format": "json",
+        "apikey": YANDEX_API_KEY
+    }
+    
+    response = requests.get(reverse_api_url, params=reverse_params).json()
+    
+    try:
+        district_name = response['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['name']
+        return district_name
+    except (KeyError, IndexError):
+        print("Не удалось определить район по координатам.")
+        return None
+
+def main():
+    user_input = input("Введите адрес (например, улица, город): ")
+    print(f"Поиск района для адреса: {user_input}")
+
+    coordinates = fetch_coordinates(user_input)
+    if coordinates:
+        district = fetch_district(coordinates)
+        if district:
+            print(f"Район: {district}")
+        else:
+            print("Не удалось найти район.")
+    else:
+        print("Не удалось получить координаты.")
+
+if __name__ == "__main__":
+    main()

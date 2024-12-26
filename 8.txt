@@ -1,0 +1,59 @@
+import math
+import requests
+
+YANDEX_GEOCODE_API_KEY = "0d997e8f-b415-4fd0-91b1-c9547916c893"
+
+def get_coordinates(address):
+    """Получает координаты по адресу."""
+    geocode_url = "https://geocode-maps.yandex.ru/1.x/"
+    params = {
+        "geocode": address,
+        "format": "json",
+        "apikey": YANDEX_GEOCODE_API_KEY
+    }
+    
+    response = requests.get(geocode_url, params=params).json()
+    
+    try:
+        point = response['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos']
+        return tuple(map(float, point.split()))
+    except (KeyError, IndexError):
+        print(f"Не удалось получить координаты для адреса: {address}")
+        return None
+
+def calculate_distance(home_coords, university_coords):
+    """Вычисляет расстояние между двумя точками по координатам."""
+    degree_to_meters_factor = 111 * 1000  # 111 километров в метрах
+    home_lon, home_lat = home_coords
+    uni_lon, uni_lat = university_coords
+
+    # Берем среднюю по широте точку и считаем коэффициент для нее.
+    radians_latitude = math.radians((home_lat + uni_lat) / 2.0)
+    lat_lon_factor = math.cos(radians_latitude)
+
+    # Вычисляем смещения в метрах по вертикали и горизонтали.
+    dx = abs(home_lon - uni_lon) * degree_to_meters_factor * lat_lon_factor
+    dy = abs(home_lat - uni_lat) * degree_to_meters_factor
+
+    # Вычисляем расстояние между точками.
+    distance = math.sqrt(dx * dx + dy * dy)
+
+    return distance
+
+def main():
+    home_address = input("Введите адрес вашего дома: ")
+    university_address = input("Введите адрес университета: ")
+
+    print("Получаем координаты...")
+    
+    home_coords = get_coordinates(home_address)
+    university_coords = get_coordinates(university_address)
+
+    if home_coords and university_coords:
+        distance = calculate_distance(home_coords, university_coords)
+        print(f"Расстояние от вашего дома до университета составляет: {distance:.2f} метров.")
+    else:
+        print("Не удалось вычислить расстояние из-за ошибки в координатах.")
+
+if __name__ == "__main__":
+    main()

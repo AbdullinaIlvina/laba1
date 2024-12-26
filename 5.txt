@@ -1,0 +1,50 @@
+import requests
+
+def find_nearest_pharmacy(address_input):
+    """Находит ближайшую аптеку по заданному адресу."""
+    
+    # URL для геокодирования
+    geocode_url = "https://geocode-maps.yandex.ru/1.x/"
+    geocode_params = {
+        "geocode": address_input,
+        "format": "json",
+        "apikey": "0d997e8f-b415-4fd0-91b1-c9547916c893"  # Убедитесь, что ключ API действителен
+    }
+    
+    # Получаем координаты адреса
+    response = requests.get(geocode_url, params=geocode_params).json()
+
+    try:
+        position = response['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos']
+    except (KeyError, IndexError):
+        print("Не удалось найти координаты для данного адреса.")
+        return
+
+    coords = tuple(map(float, position.split()))
+    print(f"Координаты адреса: {coords}")
+
+    # URL для поиска аптек
+    search_url = "https://search-maps.yandex.ru/v1/"
+    search_params = {
+        "apikey": "6c058cdf-afa0-40e6-8d9f-740452796714",  # Убедитесь, что ключ API действителен
+        "text": "аптека",
+        "ll": f"{coords[0]},{coords[1]}",
+        "type": "biz",
+        "lang": "ru_RU",
+        "results": 5,
+    }
+    
+    # Ищем ближайшую аптеку
+    search_response = requests.get(search_url, params=search_params).json()
+
+    if 'features' in search_response and search_response['features']:
+        nearest_pharmacy = search_response['features'][0]
+        pharmacy_name = nearest_pharmacy['properties']['CompanyMetaData']['name']
+        pharmacy_address = nearest_pharmacy['properties']['CompanyMetaData'].get('address', 'Адрес не указан')
+        print(f"Ближайшая аптека: {pharmacy_name}, адрес: {pharmacy_address}")
+    else:
+        print("Аптеки поблизости не найдены.")
+
+# Запрос адреса у пользователя
+user_address = input("Введите адрес: ")
+find_nearest_pharmacy(user_address)
